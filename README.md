@@ -1,56 +1,88 @@
-# Welcome to your Expo app 👋
+# Nalog
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A weekly journaling app for iOS, Android, and the web. One file per week — write today's entry on the starter tab, scroll up to see the days you've already written, scroll past today to peek at what your friends have been writing.
 
-## Get started
+Built with Expo SDK 52, React Native 0.76, TypeScript, and Reanimated.
 
-1. Install dependencies
+## Stack
 
-   ```bash
-   npm install
-   ```
+- **Expo SDK 52** — managed workflow, Expo Router (file-based routing)
+- **React Native 0.76 / React 18**
+- **TypeScript** (strict)
+- **React Native Reanimated** + Gesture Handler (writer pop reveal, bottom-sheet snap)
+- **AsyncStorage** for local persistence (no backend yet)
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Getting started
 
 ```bash
-npm run reset-project
+# nvm must be sourced once per terminal session
+export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh"
+
+npm install
+npm start          # Expo dev server (scan the QR with Expo Go)
+npm run ios        # iOS simulator
+npm run android    # Android emulator
+npm run web        # Browser
+npm run lint       # ESLint
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Native `/ios` and `/android` folders are not checked in. Run `npx expo prebuild` to generate them when needed.
 
-### Other setup steps
+## Project layout
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```
+src/
+  app/                  # Expo Router screens (file-based)
+    _layout.tsx
+    index.tsx           # Starter / writer tab
+    settings.tsx
+    log/                # Long-form blog-style posts
+    n/[id].tsx          # Nalog post detail
+    u/[id].tsx          # User profile
+  components/
+    WeekWriter.tsx      # Writer surface — today's entry + scroll-up reveal of prior days
+    DayEntry.tsx        # One day's subtitle + body input
+    WriterStateProvider.tsx
+    BottomSheet.tsx     # Snap-driven sheet hosting the social feed
+    SheetStateContext.tsx
+    writer/             # Header, past-week affordance
+    sheet/              # Snap helpers
+    log/                # Log composer / list
+  hooks/
+    useAutoSavedField.ts
+    useAutoPublish.ts
+    useNow.ts
+  lib/
+    date.ts             # ISO week + day index, storage keys
+    useCurrentDate.ts
+  social/
+    components/         # Avatar, FollowerWidget, etc.
+    data/               # social-store hooks, seed friends + posts
+    tabs/               # Home / Discover / Profile tabs inside the sheet
+  constants/theme.ts    # Colors, fonts, spacing
+assets/                 # Images, fonts, icons
+```
 
-## Learn more
+## Data model
 
-To learn more about developing your project with Expo, look at the following resources:
+A **week** is the unit of storage. Each week has:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- one **title** (`nalog_w{week}_title`)
+- seven **day entries** (`nalog_w{week}_d{1..7}_subtitle` and `_body`), one per day Mon–Sun
 
-## Join the community
+Day index is derived from `getDayIndex(Date)` (1 = Monday, 7 = Sunday) and the week from ISO 8601 week numbers. The writer shows today's day as the editable surface and renders earlier days of the same week above it, read-only.
 
-Join our community of developers creating universal apps.
+Published weeks (when the user shares to the timeline) are stored separately under `nalog_pub_w{week}` so drafts and published posts don't collide.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Notable behaviors
+
+- **Pop-as-you-scroll-up** — on the writer tab, prior days are invisible on arrival. Each one fades and scales in as it scrolls into the viewport, driven by a shared `scrollY` on the UI thread.
+- **Overscroll opens the feed** — scrolling 64px past the bottom of today's entry pops the social bottom sheet to its bar snap.
+- **Auto-save** — fields debounce 800ms before writing to AsyncStorage; the header shows "Saving…" → "All changes saved".
+- **Streak** — number of consecutive published weeks ending at the most recent published week ≤ this week.
+
+## Conventions
+
+- Strict TypeScript; no `any` if you can help it.
+- Path alias `@/*` → `src/*`.
+- Read the versioned Expo docs at <https://docs.expo.dev/versions/v52.0.0/> before touching Expo APIs — APIs have shifted since older snapshots.
