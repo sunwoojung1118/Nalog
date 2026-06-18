@@ -1,8 +1,9 @@
+import { BlurView } from 'expo-blur';
 import React from 'react';
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, fonts, spacing } from '@/constants/theme';
+import { colors, fonts, radius, spacing } from '@/constants/theme';
 import { usePublishMode } from '@/social/data/social-store';
 
 export default function SettingsScreen() {
@@ -21,20 +22,24 @@ export default function SettingsScreen() {
         <View style={{ width: 56 }} />
       </View>
 
-      <View style={styles.row}>
-        <View style={styles.rowText}>
-          <Text style={styles.rowTitle}>Auto-publish on Sunday</Text>
-          <Text style={styles.rowSub}>
-            Auto-publishes when the app next opens after Sunday. Turn off to publish manually.
-          </Text>
+      <View style={styles.rowWrap}>
+        <BlurView intensity={18} tint="dark" style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, styles.rowOverlay]} />
+        <View style={styles.row}>
+          <View style={styles.rowText}>
+            <Text style={styles.rowTitle}>Auto-publish on Sunday</Text>
+            <Text style={styles.rowSub}>
+              Auto-publishes when the app next opens after Sunday. Turn off to publish manually.
+            </Text>
+          </View>
+          <Switch
+            value={isAuto}
+            onValueChange={(v) => setMode(v ? 'auto' : 'manual')}
+            disabled={!hydrated}
+            trackColor={{ false: colors.handle, true: colors.accent }}
+            thumbColor="#FFFFFF"
+          />
         </View>
-        <Switch
-          value={isAuto}
-          onValueChange={(v) => setMode(v ? 'auto' : 'manual')}
-          disabled={!hydrated}
-          trackColor={{ false: colors.handle, true: colors.amber }}
-          thumbColor={colors.paper}
-        />
       </View>
     </View>
   );
@@ -43,7 +48,7 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.community,
+    backgroundColor: colors.bg,
     paddingHorizontal: spacing.lg,
   },
   header: {
@@ -55,20 +60,28 @@ const styles = StyleSheet.create({
   back: {
     fontFamily: fonts.serif,
     fontSize: 15,
-    color: colors.inkSoft,
+    color: colors.textSoft,
   },
   title: {
     fontFamily: fonts.serif,
     fontSize: 18,
     fontWeight: '700',
-    color: colors.ink,
+    color: colors.text,
+  },
+  rowWrap: {
+    borderRadius: radius.card + 6,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+  },
+  rowOverlay: {
+    backgroundColor: 'rgba(10,10,15,0.45)',
+    borderRadius: radius.card + 6,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    backgroundColor: colors.paper,
-    borderRadius: 20,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
   },
@@ -80,12 +93,12 @@ const styles = StyleSheet.create({
     fontFamily: fonts.serif,
     fontSize: 16,
     fontWeight: '700',
-    color: colors.ink,
+    color: colors.text,
   },
   rowSub: {
     fontFamily: fonts.serif,
     fontSize: 13,
-    color: colors.inkSoft,
+    color: colors.textSoft,
     lineHeight: 18,
   },
 });

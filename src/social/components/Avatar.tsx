@@ -22,15 +22,15 @@ export function Avatar({ initials, size = 36 }: Props) {
 
 const styles = StyleSheet.create({
   wrap: {
-    backgroundColor: colors.paperDeep,
+    backgroundColor: colors.glassElevated,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.divider,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
   },
   text: {
     fontFamily: fonts.serif,
-    color: colors.ink,
+    color: colors.text,
     fontWeight: '700',
     letterSpacing: 0.4,
   },

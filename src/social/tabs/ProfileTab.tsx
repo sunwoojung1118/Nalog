@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Pressable,
   ScrollView,
@@ -11,9 +10,10 @@ import {
 import { colors, fonts, spacing } from '@/constants/theme';
 import { Avatar } from '@/social/components/Avatar';
 import { ProfileHeaderActions } from '@/social/components/ProfileHeaderActions';
-import { PastWeek, useMyProfile, usePastWeeks } from '@/social/data/social-store';
+import { PastWeek, profileInitials, useMyProfile, usePastWeeks } from '@/social/data/social-store';
 import { DayEntry } from '@/components/DayEntry';
-import { DayIndex, storageKey } from '@/lib/date';
+import { DayIndex } from '@/lib/date';
+import { MetricEntry, WeekHabit, readWeekCache } from '@/lib/weekStore';
 
 type Props = { contentBottomPadding: number };
 
@@ -32,7 +32,7 @@ export function ProfileTab({ contentBottomPadding }: Props) {
     );
   }
 
-  const initials = (profile.name || 'You').slice(0, 2).toUpperCase();
+  const initials = profileInitials(profile.name);
 
   return (
     <ScrollView
@@ -47,17 +47,17 @@ export function ProfileTab({ contentBottomPadding }: Props) {
           value={profile.name}
           onChangeText={profile.onChangeName}
           placeholder="Your name"
-          placeholderTextColor={colors.inkFaint}
+          placeholderTextColor={colors.textFaint}
           style={styles.name}
-          selectionColor={colors.amber}
+          selectionColor={colors.accent}
         />
         <TextInput
           value={profile.bio}
           onChangeText={profile.onChangeBio}
           placeholder="A line about you"
-          placeholderTextColor={colors.inkFaint}
+          placeholderTextColor={colors.textFaint}
           style={styles.bio}
-          selectionColor={colors.amber}
+          selectionColor={colors.accent}
           multiline
         />
       </View>
@@ -67,7 +67,11 @@ export function ProfileTab({ contentBottomPadding }: Props) {
         <Text style={styles.emptyLine}>You haven{`'`}t written yet. Tap the bar to begin.</Text>
       ) : (
         past.weeks.map((w) => (
-          <Pressable key={w.week} onPress={() => setOpenWeek(w)} style={styles.weekRow}>
+          <Pressable
+            key={`${w.year}-${w.week}`}
+            onPress={() => setOpenWeek(w)}
+            style={styles.weekRow}
+          >
             <Text style={styles.weekNum}>{`w${w.week}`}</Text>
             <View style={{ flex: 1 }}>
               <Text style={styles.weekTitle} numberOfLines={1}>
@@ -82,6 +86,14 @@ export function ProfileTab({ contentBottomPadding }: Props) {
   );
 }
 
+type ViewerEntry = {
+  day: DayIndex;
+  subtitle: string;
+  blocks: import('@/lib/blocks').Block[];
+  metrics: MetricEntry[];
+  habitChecks: Record<string, boolean>;
+};
+
 function WeekViewer({
   week,
   onBack,
@@ -91,23 +103,36 @@ function WeekViewer({
   onBack: () => void;
   contentBottomPadding: number;
 }) {
-  const [entries, setEntries] = useState<{ day: DayIndex; subtitle: string; body: string }[]>([]);
+  const [entries, setEntries] = useState<ViewerEntry[]>([]);
+  const [habits, setHabits] = useState<WeekHabit[]>([]);
   useEffect(() => {
     const load = async () => {
+      const draft = await readWeekCache(week.year, week.week);
+      if (!draft) {
+        setEntries([]);
+        setHabits([]);
+        return;
+      }
       const days: DayIndex[] = [1, 2, 3, 4, 5, 6, 7];
-      const pairs = await Promise.all(
-        days.map(async (d) => {
-          const [sub, body] = await Promise.all([
-            AsyncStorage.getItem(storageKey(week.week, d, 'subtitle')),
-            AsyncStorage.getItem(storageKey(week.week, d, 'body')),
-          ]);
-          return { day: d, subtitle: sub ?? '', body: body ?? '' };
-        }),
+      const resolved: ViewerEntry[] = days.map((d) => ({
+        day: d,
+        subtitle: draft.days[d].subtitle,
+        blocks: draft.days[d].blocks,
+        metrics: draft.days[d].metrics,
+        habitChecks: draft.days[d].habitChecks,
+      }));
+      const pairs = resolved.filter(
+        (p) =>
+          p.subtitle ||
+          p.blocks.length > 0 ||
+          p.metrics.length > 0 ||
+          Object.keys(p.habitChecks).length > 0,
       );
-      setEntries(pairs.filter((p) => p.subtitle || p.body));
+      setEntries(pairs);
+      setHabits(draft.habits);
     };
     load();
-  }, [week.week]);
+  }, [week.year, week.week]);
 
   return (
     <ScrollView
@@ -125,10 +150,14 @@ function WeekViewer({
       <View style={{ paddingHorizontal: spacing.lg }}>
         {entries.map((e) => (
           <DayEntry
-            key={`v-${week.week}-${e.day}`}
+            key={`v-${week.year}-${week.week}-${e.day}`}
+            week={week.week}
             dayIndex={e.day}
             subtitle={e.subtitle}
-            body={e.body}
+            blocks={e.blocks}
+            metrics={e.metrics}
+            habitChecks={e.habitChecks}
+            weekHabits={habits}
             readOnly
           />
         ))}
@@ -151,7 +180,7 @@ const styles = StyleSheet.create({
   name: {
     fontFamily: fonts.serif,
     fontSize: 22,
-    color: colors.ink,
+    color: colors.text,
     fontWeight: '700',
     textAlign: 'center',
     paddingVertical: 2,
@@ -160,7 +189,7 @@ const styles = StyleSheet.create({
   bio: {
     fontFamily: fonts.serif,
     fontSize: 15,
-    color: colors.inkSoft,
+    color: colors.textSoft,
     textAlign: 'center',
     paddingVertical: 2,
     maxWidth: 320,
@@ -170,7 +199,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     fontSize: 12,
     letterSpacing: 1.2,
-    color: colors.inkFaint,
+    color: colors.textFaint,
     textTransform: 'uppercase',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
@@ -180,7 +209,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.serifItalic,
     fontStyle: 'italic',
     fontSize: 14,
-    color: colors.inkFaint,
+    color: colors.textFaint,
     paddingHorizontal: spacing.lg,
   },
   weekRow: {
@@ -196,19 +225,19 @@ const styles = StyleSheet.create({
     fontFamily: fonts.serif,
     fontSize: 18,
     fontWeight: '800',
-    color: colors.amber,
+    color: colors.accent,
     width: 48,
   },
   weekTitle: {
     fontFamily: fonts.serif,
     fontSize: 16,
-    color: colors.ink,
+    color: colors.text,
   },
   weekMeta: {
     fontFamily: fonts.serifItalic,
     fontStyle: 'italic',
     fontSize: 12,
-    color: colors.inkFaint,
+    color: colors.textFaint,
     marginTop: 2,
   },
   viewerHeader: {
@@ -221,18 +250,18 @@ const styles = StyleSheet.create({
   back: {
     fontFamily: fonts.serif,
     fontSize: 14,
-    color: colors.inkSoft,
+    color: colors.textSoft,
     marginBottom: spacing.sm,
   },
   viewerWeekNum: {
     fontFamily: fonts.serif,
     fontSize: 28,
     fontWeight: '800',
-    color: colors.amber,
+    color: colors.accent,
   },
   viewerTitle: {
     fontFamily: fonts.serif,
     fontSize: 20,
-    color: colors.ink,
+    color: colors.text,
   },
 });

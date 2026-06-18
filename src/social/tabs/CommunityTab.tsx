@@ -1,3 +1,4 @@
+import { BlurView } from 'expo-blur';
 import React, { useState } from 'react';
 import {
   Modal,
@@ -98,9 +99,7 @@ function CommunityRow({
     <Pressable onPress={onOpen} style={styles.row}>
       <View style={{ flex: 1 }}>
         <Text style={styles.rowName}>{community.name}</Text>
-        <Text style={styles.rowBlurb} numberOfLines={1}>
-          {community.blurb}
-        </Text>
+        <Text style={styles.rowBlurb} numberOfLines={1}>{community.blurb}</Text>
       </View>
       <Text style={styles.rowMeta}>{`#${community.tag}  ·  ${community.memberCount}`}</Text>
     </Pressable>
@@ -170,41 +169,45 @@ function CreateCommunityModal({
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <Pressable style={styles.modalScrim} onPress={onClose} />
-      <View style={styles.modalCard}>
-        <Text style={styles.modalTitle}>Start a community</Text>
-        <Text style={styles.modalLabel}>Name</Text>
-        <TextInput
-          value={name}
-          onChangeText={setName}
-          placeholder="e.g. D3 college soccer"
-          placeholderTextColor={colors.inkFaint}
-          style={styles.modalInput}
-          selectionColor={colors.amber}
-        />
-        <Text style={styles.modalLabel}>Tag</Text>
-        <TextInput
-          value={tag}
-          onChangeText={setTag}
-          placeholder="e.g. soccer"
-          placeholderTextColor={colors.inkFaint}
-          style={styles.modalInput}
-          selectionColor={colors.amber}
-          autoCapitalize="none"
-        />
-        <View style={styles.modalActions}>
-          <Pressable onPress={onClose} hitSlop={10}>
-            <Text style={styles.modalCancel}>Cancel</Text>
-          </Pressable>
-          <Pressable
-            onPress={async () => {
-              await onCreate(name, tag);
-              setName('');
-              setTag('');
-            }}
-            style={styles.modalSubmit}
-          >
-            <Text style={styles.modalSubmitLabel}>Create</Text>
-          </Pressable>
+      <View style={styles.modalCardWrap}>
+        <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, styles.modalCardOverlay]} />
+        <View style={styles.modalCard}>
+          <Text style={styles.modalTitle}>Start a community</Text>
+          <Text style={styles.modalLabel}>Name</Text>
+          <TextInput
+            value={name}
+            onChangeText={setName}
+            placeholder="e.g. D3 college soccer"
+            placeholderTextColor={colors.textFaint}
+            style={styles.modalInput}
+            selectionColor={colors.accent}
+          />
+          <Text style={styles.modalLabel}>Tag</Text>
+          <TextInput
+            value={tag}
+            onChangeText={setTag}
+            placeholder="e.g. soccer"
+            placeholderTextColor={colors.textFaint}
+            style={styles.modalInput}
+            selectionColor={colors.accent}
+            autoCapitalize="none"
+          />
+          <View style={styles.modalActions}>
+            <Pressable onPress={onClose} hitSlop={10}>
+              <Text style={styles.modalCancel}>Cancel</Text>
+            </Pressable>
+            <Pressable
+              onPress={async () => {
+                await onCreate(name, tag);
+                setName('');
+                setTag('');
+              }}
+              style={styles.modalSubmit}
+            >
+              <Text style={styles.modalSubmitLabel}>Create</Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     </Modal>
@@ -226,20 +229,20 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     fontSize: 12,
     letterSpacing: 1.4,
-    color: colors.inkSoft,
+    color: colors.textFaint,
     textTransform: 'uppercase',
   },
   headline: {
     fontFamily: fonts.serif,
     fontSize: 24,
-    color: colors.ink,
+    color: colors.text,
     fontWeight: '700',
     marginTop: 2,
   },
   action: {
     fontFamily: fonts.serif,
     fontSize: 15,
-    color: colors.amber,
+    color: colors.accent,
     fontWeight: '700',
   },
   sectionTitle: {
@@ -247,7 +250,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     fontSize: 12,
     letterSpacing: 1.2,
-    color: colors.inkFaint,
+    color: colors.textFaint,
     textTransform: 'uppercase',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
@@ -257,7 +260,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.serifItalic,
     fontStyle: 'italic',
     fontSize: 14,
-    color: colors.inkFaint,
+    color: colors.textFaint,
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
   },
@@ -273,20 +276,20 @@ const styles = StyleSheet.create({
   rowName: {
     fontFamily: fonts.serif,
     fontSize: 17,
-    color: colors.ink,
+    color: colors.text,
     fontWeight: '700',
   },
   rowBlurb: {
     fontFamily: fonts.serif,
     fontSize: 14,
-    color: colors.inkSoft,
+    color: colors.textSoft,
     marginTop: 2,
   },
   rowMeta: {
     fontFamily: fonts.serifItalic,
     fontStyle: 'italic',
     fontSize: 12,
-    color: colors.inkFaint,
+    color: colors.textFaint,
   },
   detailHeader: {
     paddingHorizontal: spacing.lg,
@@ -299,67 +302,76 @@ const styles = StyleSheet.create({
   back: {
     fontFamily: fonts.serif,
     fontSize: 14,
-    color: colors.inkSoft,
+    color: colors.textSoft,
     marginBottom: spacing.sm,
   },
   detailName: {
     fontFamily: fonts.serif,
     fontSize: 26,
-    color: colors.ink,
+    color: colors.text,
     fontWeight: '700',
   },
   detailMeta: {
     fontFamily: fonts.serifItalic,
     fontStyle: 'italic',
     fontSize: 13,
-    color: colors.inkFaint,
+    color: colors.textFaint,
   },
   detailBlurb: {
     fontFamily: fonts.serif,
     fontSize: 15,
-    color: colors.inkSoft,
+    color: colors.textSoft,
     lineHeight: 22,
     marginTop: spacing.sm,
   },
   cta: {
     alignSelf: 'flex-start',
     marginTop: spacing.md,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.accent,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderRadius: radius.pill,
   },
   ctaJoined: {
     backgroundColor: 'transparent',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.inkFaint,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
   },
   ctaLabel: {
     fontFamily: fonts.serif,
-    color: colors.paper,
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
   },
   ctaLabelJoined: {
-    color: colors.inkSoft,
+    color: colors.textSoft,
   },
   modalScrim: {
     flex: 1,
-    backgroundColor: 'rgba(44,44,44,0.25)',
+    backgroundColor: 'rgba(0,0,0,0.60)',
+  },
+  modalCardWrap: {
+    overflow: 'hidden',
+    borderTopLeftRadius: radius.sheet,
+    borderTopRightRadius: radius.sheet,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: colors.glassBorder,
+  },
+  modalCardOverlay: {
+    backgroundColor: 'rgba(10,10,15,0.55)',
   },
   modalCard: {
-    backgroundColor: colors.paper,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
     paddingBottom: spacing.xl,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
     gap: spacing.sm,
   },
   modalTitle: {
     fontFamily: fonts.serif,
     fontSize: 22,
-    color: colors.ink,
+    color: colors.text,
     fontWeight: '700',
     marginBottom: spacing.sm,
   },
@@ -367,7 +379,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.serifItalic,
     fontStyle: 'italic',
     fontSize: 12,
-    color: colors.inkFaint,
+    color: colors.textFaint,
     textTransform: 'uppercase',
     letterSpacing: 1.2,
     marginTop: spacing.sm,
@@ -375,9 +387,9 @@ const styles = StyleSheet.create({
   modalInput: {
     fontFamily: fonts.serif,
     fontSize: 17,
-    color: colors.ink,
+    color: colors.text,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.divider,
+    borderBottomColor: colors.glassBorder,
     paddingVertical: spacing.sm,
   },
   modalActions: {
@@ -390,17 +402,17 @@ const styles = StyleSheet.create({
   modalCancel: {
     fontFamily: fonts.serif,
     fontSize: 15,
-    color: colors.inkSoft,
+    color: colors.textSoft,
   },
   modalSubmit: {
-    backgroundColor: colors.ink,
+    backgroundColor: colors.accent,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderRadius: radius.pill,
   },
   modalSubmitLabel: {
     fontFamily: fonts.serif,
-    color: colors.paper,
+    color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 14,
   },

@@ -1,36 +1,56 @@
 import React from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
-import { colors, fonts, spacing } from '@/constants/theme';
-import { DayIndex, dayName } from '@/lib/date';
+import { colors, fonts, radius, shadows, spacing } from '@/constants/theme';
+import { Block } from '@/lib/blocks';
+import { DayIndex, dayLabel, dayName } from '@/lib/date';
+import { MetricEntry, WeekHabit } from '@/lib/weekStore';
+import { DayHabitsRow } from './writer/DayHabitsRow';
+import { DocEditor } from './writer/DocEditor';
+import { MetricsSection } from './writer/MetricsSection';
 
 type Props = {
-  dayIndex: number;
+  week: number;
+  dayIndex: DayIndex;
   subtitle: string;
-  body: string;
+  blocks: Block[];
+  metrics: MetricEntry[];
+  habitChecks: Record<string, boolean>;
+  weekHabits: WeekHabit[];
   onChangeSubtitle?: (v: string) => void;
-  onChangeBody?: (v: string) => void;
+  onChangeBlocks?: (next: Block[]) => void;
+  onChangeMetrics?: (next: MetricEntry[]) => void;
+  onChangeHabitChecks?: (next: Record<string, boolean>) => void;
+  allocateImagePath?: () => string;
+  onOpenHabitsEditor?: () => void;
   readOnly?: boolean;
   bodyPlaceholder?: string;
   subtitlePlaceholder?: string;
 };
 
 export function DayEntry({
+  week,
   dayIndex,
   subtitle,
-  body,
+  blocks,
+  metrics,
+  habitChecks,
+  weekHabits,
   onChangeSubtitle,
-  onChangeBody,
+  onChangeBlocks,
+  onChangeMetrics,
+  onChangeHabitChecks,
+  allocateImagePath,
+  onOpenHabitsEditor,
   readOnly = false,
   bodyPlaceholder,
   subtitlePlaceholder,
 }: Props) {
-  const label =
-    dayIndex >= 1 && dayIndex <= 7 ? dayName(dayIndex as DayIndex) : '';
-
   return (
-    <View style={[styles.wrap, readOnly && styles.readOnlyWrap]}>
-      <View style={styles.row}>
-        {label ? <Text style={styles.label}>{label}</Text> : null}
+    <View style={[styles.card, readOnly && styles.readOnly]}>
+      <View style={styles.headRow}>
+        <Text style={styles.dayLabel} accessibilityLabel={`${dayName(dayIndex)} entry`}>
+          {dayLabel(week, dayIndex)}
+        </Text>
         <TextInput
           value={subtitle}
           onChangeText={onChangeSubtitle}
@@ -38,71 +58,66 @@ export function DayEntry({
           placeholder={subtitlePlaceholder ?? (readOnly ? '' : 'Today, in one line')}
           placeholderTextColor={colors.inkFaint}
           style={styles.subtitle}
-          selectionColor={colors.amber}
+          selectionColor={colors.accent}
         />
       </View>
-      <TextInput
-        value={body}
-        onChangeText={onChangeBody}
-        editable={!readOnly}
-        multiline
-        scrollEnabled={false}
+
+      <DocEditor
+        blocks={blocks}
+        onChange={onChangeBlocks ?? (() => {})}
+        readOnly={readOnly}
         placeholder={
           bodyPlaceholder ??
-          (readOnly
-            ? ''
-            : 'Start writing your day right here. No filters, no performance pressure...')
+          'Write your day. Highlight a passage to mark it Private — others won&rsquo;t see it.'
         }
-        placeholderTextColor={colors.inkFaint}
-        style={[styles.body, readOnly && styles.bodyReadOnly]}
-        selectionColor={colors.amber}
-        textAlignVertical="top"
+        allocateImagePath={allocateImagePath}
       />
+
+      <DayHabitsRow
+        habits={weekHabits}
+        checks={habitChecks}
+        onChange={onChangeHabitChecks}
+        readOnly={readOnly}
+        onOpenEditor={onOpenHabitsEditor}
+      />
+
+      <MetricsSection metrics={metrics} onChange={onChangeMetrics} readOnly={readOnly} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
+  card: {
+    backgroundColor: colors.glassElevated,
+    borderRadius: radius.tile,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
+    gap: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    ...shadows.card,
   },
-  readOnlyWrap: {
-    opacity: 0.55,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.divider,
-    marginBottom: spacing.sm,
+  readOnly: {
+    opacity: 0.78,
   },
-  row: {
+  headRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: spacing.md,
-    marginBottom: spacing.sm,
   },
-  label: {
+  dayLabel: {
     fontFamily: fonts.serifItalic,
     fontStyle: 'italic',
     fontSize: 13,
-    color: colors.inkFaint,
-    letterSpacing: 0.6,
-    textTransform: 'lowercase',
+    color: colors.accent,
+    letterSpacing: 0.4,
   },
   subtitle: {
     flex: 1,
     fontFamily: fonts.serif,
-    fontSize: 18,
-    color: colors.ink,
+    fontSize: 16,
+    color: colors.text,
     paddingVertical: 2,
-  },
-  body: {
-    fontFamily: fonts.serif,
-    fontSize: 17,
-    lineHeight: 28,
-    color: colors.ink,
-    minHeight: 180,
-    paddingTop: spacing.sm,
-  },
-  bodyReadOnly: {
-    minHeight: 0,
   },
 });
