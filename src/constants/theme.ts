@@ -1,61 +1,77 @@
 import { Platform, ViewStyle } from 'react-native';
 
 export const colors = {
-  // Base backgrounds
-  bg: '#0a0a0f',
-  bgSurface: '#0d0d16',
-
-  // Glass surfaces
-  glass: 'rgba(255,255,255,0.055)',
-  glassBorder: 'rgba(255,255,255,0.09)',
-  glassElevated: 'rgba(255,255,255,0.09)',
-  glassDeep: 'rgba(255,255,255,0.03)',
+  // Backgrounds
+  bg:              '#FFFFFF',
+  bgSurface:       '#FFFFFF',
+  bgDeep:          '#F5F5F7',
 
   // Text
-  text: '#EDEAF5',
-  textSoft: 'rgba(237,234,245,0.60)',
-  textFaint: 'rgba(237,234,245,0.30)',
+  text:            '#1A1A1A',
+  textSoft:        'rgba(26,26,26,0.60)',
+  textFaint:       'rgba(26,26,26,0.38)',
 
-  // Accent — indigo
-  accent: '#5E6AD2',
-  accentSoft: 'rgba(94,106,210,0.35)',
-  accentGlow: 'rgba(94,106,210,0.18)',
-  accentDeep: '#4B56B8',
-  accentMuted: 'rgba(94,106,210,0.15)',
+  // Accent — orange
+  accent:          '#FF6B00',
+  accentDeep:      '#E05A00',
+  accentSoft:      'rgba(255,107,0,0.18)',
+  accentMuted:     'rgba(255,107,0,0.08)',
+  accentGlow:      'rgba(255,107,0,0.15)',
 
-  // Dividers
-  divider: 'rgba(255,255,255,0.07)',
-  dividerStrong: 'rgba(255,255,255,0.13)',
-  hairline: 'rgba(255,255,255,0.06)',
-  handle: 'rgba(255,255,255,0.20)',
+  // Gradient stops for the orange FAB / publish button
+  accentGradientStart: '#FF8C00',
+  accentGradientEnd:   '#FF4500',
 
-  // Ambient orb tints
-  orb1: 'rgba(94,106,210,0.22)',
-  orb2: 'rgba(139,92,246,0.14)',
-  orb3: 'rgba(59,130,246,0.10)',
+  // Deterministic gradient covers for journal cards
+  // Use: coverGradients[(weekNumber + charCode) % coverGradients.length]
+  coverGradients: [
+    ['#FF6B00', '#FF4500'],
+    ['#7C3AED', '#4F46E5'],
+    ['#0EA5E9', '#6366F1'],
+    ['#10B981', '#059669'],
+    ['#EC4899', '#BE185D'],
+    ['#F59E0B', '#D97706'],
+  ] as const,
 
-  // Legacy aliases — keep existing imports compiling
-  paper: '#0a0a0f',
-  paperWarm: '#0d0d16',
-  paperDeep: '#111119',
-  community: '#0a0a0f',
-  card: '#0d0d16',
+  // Surfaces / borders
+  border:          'rgba(26,26,26,0.10)',
+  divider:         'rgba(26,26,26,0.07)',
+  dividerStrong:   'rgba(26,26,26,0.15)',
+  hairline:        'rgba(26,26,26,0.06)',
+  handle:          'rgba(26,26,26,0.20)',
 
-  ink: '#EDEAF5',
-  inkSoft: 'rgba(237,234,245,0.60)',
-  inkFaint: 'rgba(237,234,245,0.30)',
+  // Liquid glass tokens
+  glass:           'rgba(255,255,255,0.55)',
+  glassBorder:     'rgba(255,255,255,0.35)',
+  glassElevated:   'rgba(255,255,255,0.70)',
+  glassDeep:       'rgba(255,255,255,0.25)',
+  glassShadow:     'rgba(0,0,0,0.10)',
 
-  surfaceDark: 'rgba(255,255,255,0.055)',
-  surfaceDarkSoft: 'rgba(255,255,255,0.09)',
-  onDark: '#EDEAF5',
-  onDarkSoft: 'rgba(237,234,245,0.60)',
-  onDarkFaint: 'rgba(237,234,245,0.30)',
-  hairlineOnDark: 'rgba(255,255,255,0.07)',
-
-  blurTint: 'rgba(10,10,15,0.70)',
+  // Tab bar tokens
+  pillBg:          '#EBEBED',
+  secondaryLabel:  'rgba(60,60,67,0.50)',
 };
 
 export const fonts = {
+  // SF Pro Display — large headings (≥20pt)
+  display: Platform.select({
+    ios: '.SF Pro Display',
+    android: 'Roboto',
+    default: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  }) as string,
+  // SF Pro Text — body and UI text
+  sans: Platform.select({
+    ios: 'System',
+    android: 'Roboto',
+    default: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  }) as string,
+  // SF Pro Rounded — chips, labels, badges, tab labels
+  rounded: Platform.select({
+    ios: 'ui-rounded',
+    android: 'Roboto',
+    default: 'system-ui, sans-serif',
+  }) as string,
+  // Georgia — ONLY for journal body text and week titles
   serif: Platform.select({
     ios: 'Georgia',
     android: 'serif',
@@ -92,26 +108,41 @@ export const layout = {
   profileColumn: 760,
 };
 
-export const shadows: Record<'tile' | 'card' | 'lift', ViewStyle> = {
+
+export const shadows: Record<'tile' | 'card' | 'lift' | 'glass' | 'fab', ViewStyle> = {
   tile: {
-    shadowColor: '#5E6AD2',
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
+    shadowColor: '#000000',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
   },
   card: {
-    shadowColor: '#5E6AD2',
-    shadowOpacity: 0.12,
+    shadowColor: '#000000',
+    shadowOpacity: 0.10,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
   },
   lift: {
-    shadowColor: '#5E6AD2',
-    shadowOpacity: 0.30,
-    shadowRadius: 40,
-    shadowOffset: { width: 0, height: 12 },
+    shadowColor: '#000000',
+    shadowOpacity: 0.14,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+  },
+  glass: {
+    shadowColor: '#000000',
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+  },
+  fab: {
+    shadowColor: '#FF6B00',
+    shadowOpacity: 0.40,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
     elevation: 12,
   },
 };

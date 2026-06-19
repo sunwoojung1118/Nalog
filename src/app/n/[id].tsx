@@ -1,114 +1,163 @@
-import React from 'react';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Avatar } from '@/components/Avatar';
+import { GlassView } from '@/components/GlassView';
 import { colors, fonts, spacing } from '@/constants/theme';
-import { Avatar } from '@/social/components/Avatar';
-import { findFriendPost } from '@/social/data/social-store';
-import { formatRelative } from '@/lib/formatDate';
+import { FeedPost, fetchPost } from '@/lib/feedApi';
+import { initials } from '@/lib/profileApi';
 
-export default function PostScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
+const TOPBAR_HEIGHT = 52;
+
+export default function PostDetail() {
+  const { userId, year, week } = useLocalSearchParams<{ userId: string; year: string; week: string }>();
   const insets = useSafeAreaInsets();
+  const [post, setPost] = useState<FeedPost | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const post = id ? findFriendPost(id) : null;
-
-  if (!post) {
-    return (
-      <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backWrap}>
-          <Text style={styles.back}>← Back</Text>
-        </Pressable>
-        <Text style={styles.missing}>That post isn{`'`}t around.</Text>
-      </View>
-    );
-  }
-
-  const date = new Date(post.publishedAt ?? post.createdAt);
+  useEffect(() => {
+    if (!userId || !year || !week) return;
+    fetchPost(userId, Number(year), Number(week))
+      .then(setPost)
+      .finally(() => setLoading(false));
+  }, [userId, year, week]);
 
   return (
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={[
-        styles.content,
-        { paddingTop: insets.top + spacing.sm, paddingBottom: insets.bottom + spacing.xl },
-      ]}
-      showsVerticalScrollIndicator={false}
-    >
-      <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backWrap}>
-        <Text style={styles.back}>← Back</Text>
-      </Pressable>
-
-      <Pressable
-        onPress={() => router.push({ pathname: '/u/[id]', params: { id: post.authorId } })}
-        style={styles.author}
+    <View style={styles.root}>
+      {/* Glass top bar */}
+      <GlassView
+        variant="elevated"
+        style={[styles.topBar, { paddingTop: insets.top, height: insets.top + TOPBAR_HEIGHT }]}
+        borderRadius={0}
       >
-        <Avatar initials={post.authorInitials} size={40} />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.authorName}>{post.authorName}</Text>
-          <Text style={styles.authorMeta}>{formatRelative(date)}</Text>
+        <View style={styles.topBarInner}>
+          <Pressable onPress={() => router.back()} hitSlop={10} accessibilityRole="button">
+            <Text style={styles.back}>← Back</Text>
+          </Pressable>
+          {post ? (
+            <Text style={styles.topBarWeek}>{`w${post.week_number} · ${post.year}`}</Text>
+          ) : null}
+          <View style={{ width: 60 }} />
         </View>
-      </Pressable>
+      </GlassView>
 
-      {post.subtitle ? <Text style={styles.subtitle}>{post.subtitle}</Text> : null}
-      <Text style={styles.body}>{post.body}</Text>
-    </ScrollView>
+      {loading ? (
+        <View style={[styles.center, { paddingTop: insets.top + TOPBAR_HEIGHT }]}>
+          <ActivityIndicator color={colors.accent} size="large" />
+        </View>
+      ) : !post ? (
+        <View style={[styles.center, { paddingTop: insets.top + TOPBAR_HEIGHT }]}>
+          <Text style={styles.notFound}>Post not found.</Text>
+        </View>
+      ) : (
+        <ScrollView
+          contentContainerStyle={[
+            styles.content,
+            { paddingTop: insets.top + TOPBAR_HEIGHT + spacing.lg },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          <Pressable
+            style={styles.author}
+            onPress={() => router.push({ pathname: '/u/[id]', params: { id: post.user_id } })}
+          >
+            <Avatar initials={initials(post.profile?.display_name ?? '')} size={44} />
+            <View style={styles.authorInfo}>
+              <Text style={styles.authorName}>{post.profile?.display_name || 'Someone'}</Text>
+              <Text style={styles.authorMeta}>View profile →</Text>
+            </View>
+          </Pressable>
+
+          {post.title ? <Text style={styles.title}>{post.title}</Text> : null}
+          {post.body ? <Text style={styles.body}>{post.body}</Text> : null}
+        </ScrollView>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
+  root: { flex: 1, backgroundColor: colors.bg },
+  topBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
+  topBarInner: {
     flex: 1,
-    backgroundColor: colors.community,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.xs,
+  },
+  back: {
+    fontFamily: fonts.sans,
+    fontSize: 15,
+    color: colors.accent,
+    fontWeight: '600',
+  },
+  topBarWeek: {
+    fontFamily: fonts.rounded,
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.textFaint,
+  },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  notFound: {
+    fontFamily: fonts.sans,
+    fontSize: 16,
+    color: colors.textSoft,
   },
   content: {
     paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xl * 3,
     gap: spacing.lg,
-  },
-  backWrap: {
-    paddingVertical: spacing.sm,
-  },
-  back: {
-    fontFamily: fonts.serif,
-    fontSize: 14,
-    color: colors.inkSoft,
   },
   author: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: 14,
+    backgroundColor: colors.bgDeep,
   },
+  authorInfo: { flex: 1 },
   authorName: {
-    fontFamily: fonts.serif,
+    fontFamily: fonts.rounded,
     fontSize: 16,
-    color: colors.ink,
     fontWeight: '700',
+    color: colors.text,
   },
   authorMeta: {
-    fontFamily: fonts.serif,
-    fontSize: 13,
-    color: colors.inkFaint,
+    fontFamily: fonts.sans,
+    fontSize: 12,
+    color: colors.accent,
     marginTop: 2,
+    fontWeight: '500',
   },
-  subtitle: {
+  title: {
     fontFamily: fonts.serif,
-    fontSize: 22,
-    color: colors.ink,
+    fontSize: 28,
     fontWeight: '700',
-    lineHeight: 30,
+    color: colors.text,
+    lineHeight: 36,
   },
   body: {
     fontFamily: fonts.serif,
     fontSize: 17,
-    lineHeight: 28,
-    color: colors.ink,
-  },
-  missing: {
-    fontFamily: fonts.serif,
-    fontSize: 16,
-    color: colors.inkSoft,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl,
+    color: colors.text,
+    lineHeight: 30,
   },
 });

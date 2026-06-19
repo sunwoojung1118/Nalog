@@ -1,45 +1,33 @@
-import { BlurView } from 'expo-blur';
+import { router } from 'expo-router';
 import React from 'react';
-import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { GlassView } from '@/components/GlassView';
 import { colors, fonts, radius, spacing } from '@/constants/theme';
-import { usePublishMode } from '@/social/data/social-store';
+import { useAuth } from '@/lib/auth';
 
 export default function SettingsScreen() {
-  const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { mode, setMode, hydrated } = usePublishMode();
-  const isAuto = mode === 'auto';
+  const { signOut } = useAuth();
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
+    <View style={[styles.root, { paddingTop: insets.top }]}>
+      {/* Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={12}>
+        <Pressable onPress={() => router.back()} hitSlop={12} accessibilityLabel="Back">
           <Text style={styles.back}>← Back</Text>
         </Pressable>
         <Text style={styles.title}>Settings</Text>
         <View style={{ width: 56 }} />
       </View>
 
-      <View style={styles.rowWrap}>
-        <BlurView intensity={18} tint="dark" style={StyleSheet.absoluteFill} />
-        <View style={[StyleSheet.absoluteFill, styles.rowOverlay]} />
-        <View style={styles.row}>
-          <View style={styles.rowText}>
-            <Text style={styles.rowTitle}>Auto-publish on Sunday</Text>
-            <Text style={styles.rowSub}>
-              Auto-publishes when the app next opens after Sunday. Turn off to publish manually.
-            </Text>
-          </View>
-          <Switch
-            value={isAuto}
-            onValueChange={(v) => setMode(v ? 'auto' : 'manual')}
-            disabled={!hydrated}
-            trackColor={{ false: colors.handle, true: colors.accent }}
-            thumbColor="#FFFFFF"
-          />
-        </View>
+      <View style={styles.body}>
+        <GlassView variant="base" style={styles.section} borderRadius={radius.tile}>
+          <Pressable style={styles.row} onPress={signOut} accessibilityLabel="Sign out">
+            <Text style={styles.rowLabel}>Sign out</Text>
+            <Text style={styles.rowChevron}>→</Text>
+          </Pressable>
+        </GlassView>
       </View>
     </View>
   );
@@ -49,56 +37,48 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.bg,
-    paddingHorizontal: spacing.lg,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingBottom: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
   },
   back: {
-    fontFamily: fonts.serif,
+    fontFamily: fonts.sans,
     fontSize: 15,
-    color: colors.textSoft,
+    color: colors.accent,
+    fontWeight: '600',
   },
   title: {
-    fontFamily: fonts.serif,
+    fontFamily: fonts.display,
     fontSize: 18,
     fontWeight: '700',
     color: colors.text,
   },
-  rowWrap: {
-    borderRadius: radius.card + 6,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
+  body: {
+    flex: 1,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
   },
-  rowOverlay: {
-    backgroundColor: 'rgba(10,10,15,0.45)',
-    borderRadius: radius.card + 6,
+  section: {
+    overflow: 'hidden',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.md + 2,
   },
-  rowText: {
-    flex: 1,
-    gap: 4,
-  },
-  rowTitle: {
-    fontFamily: fonts.serif,
+  rowLabel: {
+    fontFamily: fonts.sans,
     fontSize: 16,
-    fontWeight: '700',
     color: colors.text,
   },
-  rowSub: {
-    fontFamily: fonts.serif,
-    fontSize: 13,
-    color: colors.textSoft,
-    lineHeight: 18,
+  rowChevron: {
+    fontSize: 16,
+    color: colors.textFaint,
   },
 });

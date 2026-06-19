@@ -1,60 +1,37 @@
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useRef } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import React from 'react';
+import { AuthProvider, useAuth } from '@/lib/auth';
+import { colors } from '@/constants/theme';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { colors } from '@/constants/theme';
-import { useAutoPublish } from '@/hooks/useAutoPublish';
-import { AuthProvider, useAuth } from '@/lib/auth';
 
-function AppEffects() {
-  useAutoPublish();
-  return null;
-}
-
-function AuthGate() {
+function RootStack() {
   const { session, loading } = useAuth();
-  const segments = useSegments();
-  const segmentsRef = useRef(segments);
-  segmentsRef.current = segments;
-  const router = useRouter();
-
-  useEffect(() => {
-    if (loading) return;
-    const onAuthRoute = segmentsRef.current[0] === 'sign-in';
-    if (!session && !onAuthRoute) {
-      router.replace('/sign-in');
-    } else if (session && onAuthRoute) {
-      router.replace('/');
-    }
-  }, [loading, session, router]);
-
-  if (loading) {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg }}>
-        <ActivityIndicator color={colors.accent} />
-      </View>
-    );
-  }
-
+  if (loading) return null;
   return (
-    <>
-      {session ? <AppEffects /> : null}
-      <Stack
-        screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}
-      />
-    </>
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
+      {session ? (
+        <>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="n/[id]" />
+          <Stack.Screen name="u/[id]" />
+          <Stack.Screen name="settings" />
+        </>
+      ) : (
+        <Stack.Screen name="sign-in" />
+      )}
+    </Stack>
   );
 }
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <StatusBar style="light" />
         <AuthProvider>
-          <AuthGate />
+          <StatusBar style="dark" />
+          <RootStack />
         </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -2,14 +2,14 @@
 
 A weekly journaling app for iOS, Android, and the web. One file per week — write today's entry on the starter tab, scroll up to see the days you've already written, scroll past today to peek at what your friends have been writing.
 
-Built with Expo SDK 52, React Native 0.76, TypeScript, and Reanimated.
+Built with Expo SDK 54, React Native 0.81, TypeScript, and Reanimated.
 
 ## Stack
 
-- **Expo SDK 52** — managed workflow, Expo Router (file-based routing)
-- **React Native 0.76 / React 18**
+- **Expo SDK 54** — managed workflow, Expo Router 6 (file-based routing)
+- **React Native 0.81 / React 19**
 - **TypeScript** (strict)
-- **React Native Reanimated** + Gesture Handler (writer pop reveal, bottom-sheet snap)
+- **React Native Reanimated 4** + Gesture Handler (writer pop reveal, bottom-sheet snap)
 - **AsyncStorage** for local persistence (no backend yet)
 
 ## Getting started
@@ -85,4 +85,18 @@ Published weeks (when the user shares to the timeline) are stored separately und
 
 - Strict TypeScript; no `any` if you can help it.
 - Path alias `@/*` → `src/*`.
-- Read the versioned Expo docs at <https://docs.expo.dev/versions/v52.0.0/> before touching Expo APIs — APIs have shifted since older snapshots.
+- Read the versioned Expo docs at <https://docs.expo.dev/versions/v54.0.0/> before touching Expo APIs — APIs have shifted since older snapshots.
+
+## Writer redesign (Phase 6)
+
+The day's writing surface is a continuous Google-Docs-style canvas (`DocEditor`):
+
+- **Private runs**: highlight a range of text and tap the floating **Private** bar to mark it. Private characters render with a light-gray background to the author and are **omitted entirely** from the server response sent to other viewers (server-enforced by `redact_blocks` in the `week_feed_active` view).
+- **Inline photos**: up to 5 per day via `+ photo`, each with its own caption.
+- **Per-day Training & Metrics**: bottom section with rows of activity + value (number or `HH:MM` time).
+- **Weekly habits**: declared at the top of the week; each day shows tick pills for them.
+- **Rolling 7-day visibility**: a published week is visible to followers for at most 7 days AND only while it's the author's latest week. Older weeks remain in the author's profile under **Your archive**.
+
+### iOS native "Private" UIMenu item (follow-up)
+
+For full parity with the native Cut/Copy/Replace popup on iOS, ship a custom `UIMenuItem` via an Expo config plugin + native module under `plugins/withPrivateMenuItem/` and `modules/private-text-input/`. This requires `npx expo prebuild` and an EAS dev client (Expo Go can't load custom native code). Until then, the floating selection toolbar (`src/components/writer/SelectionToolbar.tsx`) handles all platforms.
