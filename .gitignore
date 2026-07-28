@@ -41,3 +41,14 @@ example
 # generated native folders
 /ios
 /android
+
+# env files — never commit credentials
+.env
+.env.*
+!.env.example
+
+# AI tooling — local only
+.agents/
+.mcp.json
+skills-lock.json
+.claude/skills/
